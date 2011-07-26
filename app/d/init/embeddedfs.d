@@ -14,9 +14,10 @@ struct EmbeddedFS{
 		makeFile!("binaries/hello", true)();
 		makeFile!("binaries/simplymm", true)();
 
-		makeFile!("binaries/chel", true)();
+		//makeFile!("binaries/chel", true)();
 		//makeFile!("binaries/fhel", true)();
 		makeFile!("binaries/posix", true)();
+		makeFile!("binaries/test", true)();
 
 		// symlinks
 		MinFS.link("/binaries/posix", "/binaries/cat");

@@ -20,6 +20,7 @@ import architecture.vm;
 // temporary h4x
 import kernel.core.initprocess;
 
+import kernel.core.kmain;
 	
 class SyscallImplementations {
 static:
@@ -118,6 +119,15 @@ public:
 		}
 
 		Cpu.enterUserspace(idx, physAddr);
+	}
+	
+	SyscallError swap(out bool ret, SwapArgs* params) {
+		ret = true;
+		rekmain();
+		
+		//kprintf(System.kernel.start);
+	
+		return SyscallError.OK;
 	}
 }
 

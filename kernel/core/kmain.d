@@ -45,12 +45,26 @@ import kernel.core.syscall;
 // init process
 import kernel.core.initprocess;
 
+// Arguements for rekmain
+int _bootLoaderID;
+void *_data;
+
+extern(C) void rekmain() {
+	Log.print("Architecture: initialize()");
+   	Log.result(Architecture.initialize());
+
+	InitProcess.enterFromAP();
+}
+
 // The main function for the kernel.
 // This will receive data from the boot loader.
 
 // bootLoaderID is the unique identifier for a boot loader.
 // data is a structure given by the boot loader.
 extern(C) void kmain(int bootLoaderID, void *data) {
+	//save arguements
+	_bootLoaderID = bootLoaderID;
+	_data = data;
 
 	//first, we'll print out some fun status messages.
 	kprintfln!("{!cls!fg:White} Welcome to {!fg:Green}{}{!fg:White}! (version {}.{}.{})")("XOmB", 0,1,0);

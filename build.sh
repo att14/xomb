@@ -8,9 +8,9 @@ rm -r dsss* *.a
 make || exit
 cd ../..
 
-cd user/c
-make || exit
-cd ../..
+#cd user/c
+#make || exit
+#cd ../..
 
 cd app/c/hello
 make || exit
@@ -32,10 +32,13 @@ cd app/d/xsh
 dsss clean && dsss build || exit
 cd ../../..
 
-cd app/d/init
+cd app/d/test
 dsss clean && dsss build || exit
 cd ../../..
 
+cd app/d/init
+dsss clean && dsss build || exit
+cd ../../..
 
 cd build
 dsss clean && dsss build || exit
