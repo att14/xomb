@@ -84,6 +84,48 @@ public:
 
 		return ErrorVal.Success;
 	}
+	
+	ErrorVal reinitialize() {
+		LocalAPIC.reportCore();
+
+		Log.print("Cpu: Verifying");
+		Log.result(verify());
+
+		// enable NX bit support
+		Cpu.writeMSR(0xC0000080, Cpu.readMSR(0xC0000080)|0x800UL);
+
+		Log.print("Cpu: Enabling GDT");
+		Log.result(GDT.install());
+
+		Log.print("Cpu: Enabling TSS");
+		Log.result(TSS.install());
+
+		Log.print("Cpu: Enabling IDT");
+		Log.result(IDT.install());
+
+		Log.print("Cpu: Installing Stack");
+		Log.result(reinstallStack());
+
+		asm {	
+			sti;
+		}
+
+		Log.print("Cpu: Enabled Interrupts");
+	   	Log.result(ErrorVal.Success);
+	   	
+	   	Log.print("Cpu: IDT Handlers");
+		Log.result(Paging.reinitIDTHandler());
+
+		//Log.print("Cpu: Polling Cache Info");
+		//Log.result(getCacheInfo());
+
+		//enableFPU();
+
+		//Log.print("Cpu: Installing System Calls");
+		//Log.result(Syscall.initialize);
+
+		return ErrorVal.Success;
+	}
 
 	uint identifier() {
 		return LocalAPIC.identifier;
@@ -719,6 +761,56 @@ private:
 			curr = curr.next;
 		}
 
+		return ErrorVal.Success;
+	}
+	
+	ErrorVal reinstallStack() {
+		ubyte* stackSpace = cast(ubyte*)PageAllocator.allocPage();
+		stackSpace = cast(ubyte*)VirtualMemory.mapStack(stackSpace);
+		ubyte* currentStack;
+		
+		asm {
+			mov R11, RSP;
+			mov R10, ~0xfff;
+			and R11, R10;
+			mov currentStack, R11;
+		}
+
+		stackSpace[0..4096] = currentStack[0..4096];
+
+		_stacks[identifier] = cast(void*)stackSpace + 4096;
+		TSS.table.RSP0 = cast(void*)stackSpace + 4096;
+
+		StackFrame* curr = null;
+		
+		asm {
+			// Retrieve stack pointer, place in RAX
+			mov RAX, RSP;
+
+			// Get the page offset
+			and RAX, Paging.PAGESIZE - 1;
+
+			// Add this to the stackspace pointer
+			add RAX, stackSpace;
+
+			// Set stack pointer
+			mov RSP, RAX;
+
+			// Do the same for frame pointer
+			mov RAX, RBP;
+			and RAX, Paging.PAGESIZE - 1;
+			add RAX, stackSpace;
+			mov RBP, RAX;
+
+			mov curr, RBP;
+		}
+
+		while(isValidAddress(cast(ubyte*)curr.next) && cast(ulong)curr.next > Paging.PAGESIZE) {
+			curr.next = cast(StackFrame*)(cast(ulong)curr.next & (Paging.PAGESIZE - 1));
+			curr.next = cast(StackFrame*)(cast(ulong)curr.next + stackSpace); 
+			curr = curr.next;
+		}
+		
 		return ErrorVal.Success;
 	}
 

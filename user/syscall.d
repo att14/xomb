@@ -28,7 +28,7 @@ alias Tuple! (
 	"create",			// create()
 	"createAddressSpace", // createAddressSpace()
 	"map",				// map()
-	"yield"			// yield()
+	"yield",			// yield()
 	"swap"				// swap()
 ) SyscallNames;
 
@@ -76,7 +76,7 @@ struct YieldArgs {
 }
 
 struct SwapArgs {
-	//char* location;
+	ubyte* newkern;
 }
 
 // XXX: This template exists because of a bug in the DMDFE; something like Templ!(tuple[idx]) fails for some reason

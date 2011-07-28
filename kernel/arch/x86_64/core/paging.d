@@ -116,6 +116,47 @@ static:
 		// All is well.
 		return ErrorVal.Success;
 	}
+	
+	ErrorVal reinitialize() {
+		heapAddress = findFreeSegment();
+		ulong gib = cast(ulong) heapAddress;
+		gib -= 0xFFFF800000000000;
+		gib = gib/0x40000000;
+		nextGib = gib;
+
+		// We now have the kernel mapped
+		kernelMapped = true;
+
+		// Save the physical address for later
+		rootPhysical = cast(void*)root;
+
+		// This is the virtual address for the page table
+		root = cast(PageLevel4*)0xFFFFFF7F_BFDFE000;
+
+		// All is well.
+		return ErrorVal.Success;
+	}
+	
+	ErrorVal reinitIDTHandler() {
+		// Assign the page fault handler
+		IDT.assignHandler(&faultHandler, 14);
+
+		IDT.assignHandler(&gpfHandler, 13);
+		
+		return ErrorVal.Success;	
+	}
+	
+	ulong getPhysAddr(ubyte* ptr) {
+		ulong indexL1, indexL2, indexL3, indexL4;
+		
+		translateAddress(cast(ubyte*)ptr, indexL1, indexL2, indexL3, indexL4);
+
+		PageLevel3* pl3 = root.getTable(indexL4);
+
+		ulong newPhysRoot = cast(ulong)pl3.entries[indexL3].location();
+		
+		return newPhysRoot;	
+	}
 
 	void gpfHandler(InterruptStack* stack) {
 		stack.dump();

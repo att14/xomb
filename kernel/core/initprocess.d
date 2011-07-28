@@ -52,11 +52,12 @@ struct InitProcess{
 
 		// XXX: replace fixed values with findFreeGib()
 		bottle.stdout = (cast(ubyte*)findFreeSegment!(false))[0..oneGB];
-		bottle.stdin = (cast(ubyte*)findFreeSegment!(false))[0..oneGB];
 
 		// * map in video and keyboard segments
 		VirtualMemory.mapSegment(null, Console.virtualAddress(), bottle.stdout.ptr, AccessMode.Writable|AccessMode.User);
 		bottle.stdoutIsTTY = true;
+		
+		bottle.stdin = (cast(ubyte*)findFreeSegment!(false))[0..oneGB];
 
 		VirtualMemory.mapSegment(null, Keyboard.address, bottle.stdin.ptr, AccessMode.Writable|AccessMode.User);
 		bottle.stdinIsTTY = true;

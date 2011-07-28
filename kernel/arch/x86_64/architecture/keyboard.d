@@ -14,7 +14,7 @@ import user.keycodes;
 
 class KeyboardImplementation {
 static:
-	ErrorVal initialize(void function(Key, bool) keyProc) {
+	ErrorVal initialize(void function(Key, bool) keyProc, bool initializeAPIC) {
 		ubyte mode;
 		ubyte status, code;
 
@@ -104,13 +104,16 @@ static:
 		// bit 5 - IRQ 12 (0: active, 1: inactive)	// commonly Mouse IRQ
 		// bit 6 - Keyboard Clock
 		// bit 7 - Keyboard Data
-
+		
 		PIC.EOI(1);
 		LocalAPIC.EOI();
 		IDT.assignHandler(&keyboardHandler, 33);
-		IOAPIC.unmaskIRQ(1, 0);
+		if (initializeAPIC) {
+			IOAPIC.unmaskIRQ(1, 0);
+		}
 		PIC.EOI(1);
 		LocalAPIC.EOI();
+		
 
 		status = Cpu.ioIn!(ubyte, "0x64")();
 		while((status & 0x1) == 1) {

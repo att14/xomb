@@ -220,7 +220,7 @@ template populateChild(T){
 template findFreeSegment(bool upperhalf = true, bool global = false, uint size = 1024*1024*1024){
 	ubyte* findFreeSegment(){
 		const uint dividingLine = 256;
-		static uint last1 = (upperhalf ? dividingLine : 0), last2 = (upperhalf ? 0 : 1);
+		uint last1 = (upperhalf ? dividingLine : 0), last2 = (upperhalf ? 0 : 1);
 			
 		bool foundFree;
 		void* addy;

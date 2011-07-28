@@ -15,6 +15,7 @@ import kernel.arch.x86_64.core.idt;
 import kernel.arch.x86_64.core.ioapic;
 import kernel.arch.x86_64.core.lapic;
 import kernel.arch.x86_64.core.info;
+import kernel.arch.x86_64.core.paging;
 
 // MP Spec
 import kernel.arch.x86_64.specs.mp;
@@ -67,6 +68,53 @@ public:
 		asm {
 			sti;
 		}
+
+		// If it got this far, it has succeeded
+		return ErrorVal.Success;
+	}
+	
+	ErrorVal reinitialize() {
+		// Remake Tables
+		Paging.mapRegion(cast(void*) 0x1000, cast(void*) 0x1000, cast(ulong) 0x10000);
+		
+		// 1. Look for the ACPI tables (preferred method)
+		if(ACPI.Tables.findTable() == ErrorVal.Success && ACPI.Tables.readTable() != ErrorVal.Success) {
+			return ErrorVal.Fail;
+		}
+		else {
+			// 2. Fall back on looking for the MP tables
+
+			// 2a. Locate the MP Tables
+			if (MP.findTable() == ErrorVal.Fail) {
+				// If the MP table is missing, fail.
+				return ErrorVal.Fail;
+			}
+
+			// 2b. Read MP Tabletest
+			if (MP.readTable() != ErrorVal.Success) {
+				return ErrorVal.Fail;
+			}
+		}
+
+		// 3a. Initialize Local APIC
+		Log.print("LocalAPIC: initialize()");
+		ErrorVal LAPICInitialized = Log.result(LocalAPIC.initialize());
+		if (LAPICInitialized != ErrorVal.Success) {
+			return ErrorVal.Fail;
+		}
+		
+		// 3b. Initialize IOAPIC
+		Log.print("IOAPIC: initialize()");
+		ErrorVal IOAPICInitialized = Log.result(IOAPIC.initialize());
+		if (IOAPICInitialized != ErrorVal.Success) {
+			return ErrorVal.Fail;
+		}
+		
+		// Enable Interrupts
+		asm {
+			sti;
+		}
+//		enableInterrupts();
 
 		// If it got this far, it has succeeded
 		return ErrorVal.Success;

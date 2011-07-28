@@ -127,6 +127,17 @@ ErrorVal initialize() {
 	return ErrorVal.Success;
 }
 
+ErrorVal reinitialize(ulong* bitmap, ulong totalP) {
+	totalPages = totalP;
+	
+	bitmapGib = bitmap;
+	
+	const uint bitsPerPage = 4096 * 8;
+	bitmapPages = totalPages / bitsPerPage;
+	
+	return ErrorVal.Success;
+}
+
 ErrorVal reportCore() {
 	return ErrorVal.Success;
 }

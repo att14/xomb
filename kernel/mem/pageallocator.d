@@ -41,6 +41,12 @@ public:
 		_initialized = true;
 		return ret;
 	}
+	
+	ErrorVal reinitialize(ulong* bitmap, ulong totalP) {
+		ErrorVal ret = PageAllocatorImplementation.reinitialize(bitmap, totalP);
+		_initialized = true;
+		return ret;
+	}
 
 	ErrorVal reportCore() {
 		return PageAllocatorImplementation.reportCore();

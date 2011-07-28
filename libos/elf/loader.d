@@ -51,9 +51,9 @@ private:
 		void* physAddress = Elf.getphysaddr(binaryAddr);
 		void* virtAddress = Elf.getvirtaddr(binaryAddr);
 
-		assert(virtAddress == cast(void*)oneGB);
-		assert(physAddress == cast(void*)oneGB);
-		assert(entryAddress == (cast(void*)oneGB + 16));
+		//assert(virtAddress == cast(void*)oneGB);
+		//assert(physAddress == cast(void*)oneGB);
+		//assert(entryAddress == (cast(void*)oneGB + 16));
 
 		Segment curSegment;
 		uint numSegments = Elf.segmentCount(binaryAddr);

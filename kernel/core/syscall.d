@@ -21,6 +21,9 @@ import architecture.vm;
 import kernel.core.initprocess;
 
 import kernel.core.kmain;
+import libos.fs.minfs;
+import kernel.config : PageAllocatorImplementation;
+import kernel.dev.keyboard;
 	
 class SyscallImplementations {
 static:
@@ -122,10 +125,65 @@ public:
 	}
 	
 	SyscallError swap(out bool ret, SwapArgs* params) {
-		ret = true;
-		rekmain();
+		ubyte* nkern = params.newkern;
+		long test;	//debug
+		ulong _startk = 0xFFFF800000000000;
 		
-		//kprintf(System.kernel.start);
+		// map kernel so it can be overwritten
+		ubyte* _mkernel = findFreeSegment();
+		VirtualMemory.mapSegment(null, cast(ubyte*) _startk, _mkernel, AccessMode.Writable|AccessMode.Executable);
+		
+		ulong physb = VirtualMemory.getPhysAddr(nkern);
+		ubyte* virta = cast(ubyte*) createAddress(256, 510, 510, 510);
+		
+		// pageallocator stuffs
+		ulong* bitmap = cast(ulong*) PageAllocatorImplementation.virtualStart();
+		ulong totalP = cast(ulong)PageAllocatorImplementation.length();
+		
+		// keyboard buffer
+		short* keyboard = Keyboard.getKeyboardBuffer();
+		
+		// console vid
+		ubyte* vid = Console.virtualAddress();
+		
+		// calculate phys address of new xomb segment
+		// location to write within oldkernel
+		asm {
+			call one;
+two:		sub RBX, _startk;
+			add RBX, _mkernel;
+			add RBX, 0x16;		//sketchy
+			mov test, RBX;		//debug
+			jmp RBX;
+one:		pop RBX;
+			jmp two;
+three:		nop;				//debug
+		}
+		// debug prints
+		//kprintfln!("{x}")(test);
+		//kprintfln!("{x}")(nkern);
+		
+		// map new kernel into original kernel position
+		asm {
+			mov RBX, physb;
+			or RBX, 0x3;
+			mov RCX, virta;
+			mov [RCX], RBX;
+tlb:		mov RAX, CR3;
+			mov CR3, RAX;
+			mov RAX, CR4;
+			mov CR4, RAX;
+			mov RAX, _startk;
+			add RAX, 0x10;
+			mov RDI, keyboard;
+			mov RSI, bitmap;
+			mov RDX, totalP;
+			mov RCX, vid;
+			jmp RAX;	
+		}
+		
+		//should not get here
+		ret = true;
 	
 		return SyscallError.OK;
 	}

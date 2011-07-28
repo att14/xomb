@@ -21,10 +21,16 @@ static:
 public:
 
 	// -- Initialization -- //
-
+	bool reinit;
+	
 	ErrorVal initialize() {
 		// Install Virtual Memory and Paging
 		return Paging.initialize();
+	}
+	
+	ErrorVal reinitialize() {
+		reinit = true;
+		return Paging.reinitialize();	
 	}
 
 	ErrorVal install() {
@@ -76,6 +82,9 @@ public:
 	}
 
 	synchronized void* mapStack(void* physAddr) {
+		if(reinit){
+			return Paging.mapRegion(physAddr, 4096);	
+		}
 		if(stackSegment is null){
 			stackSegment = findFreeSegment();
 			Paging.createGib(stackSegment, oneGB, AccessMode.Writable);
@@ -93,6 +102,10 @@ public:
 	// --- OLD --- //
 	synchronized ErrorVal mapRegion(void* gib, void* physAddr, ulong regionLength) {
 		return Paging.mapRegion(gib, physAddr, regionLength);
+	}
+	
+	ulong getPhysAddr(ubyte* ptr) {
+		return Paging.getPhysAddr(ptr);	
 	}
 
 private:

@@ -61,5 +61,31 @@ public:
 		// Everything must have succeeded
 		return ErrorVal.Success;
 	}
+	
+	ErrorVal reinitialize() {
+		// Reading from the linker script
+		// We want the length of the kernel module
+		System.kernel.start = cast(ubyte*)0x0;
+		System.kernel.length = LinkerScript.ekernel - LinkerScript.kernelVMA;
+		System.kernel.virtualStart = cast(ubyte*)LinkerScript.kernelVMA;
+
+		// Global Descriptor Table
+		Log.print("Architecture: Initializing GDT");
+	   	Log.result(GDT.initialize());
+
+		// Task State Segment
+		Log.print("Architecture: Initializing TSS");
+		Log.result(TSS.initialize());
+
+		// Interrupt Descriptor Table
+		Log.print("Architecture: Initializing IDT");
+		Log.result(IDT.initialize());
+
+		Log.print("Cpu: Polling Cache Info");
+		Log.result(Cpu.getCacheInfo());
+
+		// Everything must have succeeded
+		return ErrorVal.Success;
+	}
 }
 

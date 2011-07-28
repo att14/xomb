@@ -29,8 +29,27 @@ class Keyboard {
 		_maxOffset = ((3 * VirtualMemory.pagesize()) / 2) - 3;
 
 		_buffer = _buffer[3..	_maxOffset];
-		ErrorVal ret = KeyboardImplementation.initialize(&putKey);
+		ErrorVal ret = KeyboardImplementation.initialize(&putKey, true);
 		return ret;
+	}
+	
+	ErrorVal reinitialize(short* buffer) {
+		// Instead of creating new buffer, use old values
+		_writeOffset = cast(ushort*) buffer - 3;
+		_readOffset = cast(ushort*) buffer - 2;
+		_maxOffset = (*(cast(ushort*) buffer - 1) / 2) - 3;
+		
+		_buffer = buffer[0.. _maxOffset];
+		
+		// Trying to clear buffer
+		//*_writeOffset = *_readOffset;
+		
+		ErrorVal ret = KeyboardImplementation.initialize(&putKey, false);
+		return ret;
+	}
+	
+	short* getKeyboardBuffer() {
+		return _buffer.ptr;
 	}
 	
 	ubyte* address;

@@ -12,12 +12,14 @@ struct EmbeddedFS{
 		// binaries
 		xsh = makeFile!("binaries/xsh", true)();
 		makeFile!("binaries/hello", true)();
-		makeFile!("binaries/simplymm", true)();
+		//makeFile!("binaries/simplymm", true)();
 
 		//makeFile!("binaries/chel", true)();
 		//makeFile!("binaries/fhel", true)();
 		makeFile!("binaries/posix", true)();
 		makeFile!("binaries/test", true)();
+		// updated kernel for swap
+		makeFile!("binaries/xomb", true)();
 
 		// symlinks
 		MinFS.link("/binaries/posix", "/binaries/cat");

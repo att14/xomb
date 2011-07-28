@@ -72,6 +72,15 @@ public:
 
 		return ErrorVal.Success;
 	}
+	
+	ErrorVal reinitialize(ubyte* vid) {
+		MetaData* videoMetaData = cast(MetaData*)vid;
+
+		videoMemoryLocation = vid + videoMetaData.videoBufferOffset;
+		videoInfo = videoMetaData;
+
+		return ErrorVal.Success;	
+	}
 
 	// This method will clear the screen and return the cursor to (0,0).
 	void clearScreen() {
