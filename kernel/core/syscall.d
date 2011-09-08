@@ -138,7 +138,7 @@ public:
 		
 		// pageallocator stuffs
 		ulong* bitmap = cast(ulong*) PageAllocatorImplementation.virtualStart();
-		ulong totalP = cast(ulong)PageAllocatorImplementation.length();
+		ulong totalP = cast(ulong)PageAllocatorImplementation.numberOfPages();
 		
 		// keyboard buffer
 		short* keyboard = Keyboard.getKeyboardBuffer();

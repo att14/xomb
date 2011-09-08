@@ -187,8 +187,8 @@ ErrorVal freePage(void* address) {
 	return ErrorVal.Success;
 }
 
-uint length() {
-	return bitmapPages * VirtualMemory.pagesize();
+uint numberOfPages() {
+	return totalPages;
 }
 
 ubyte* start() {
