@@ -17,9 +17,9 @@ import libos.libdeepmajik.threadscheduler;
 char[] itoa(long, uint);
 
 void newThread() {
-	Console.putString("Hey we made it back");
+	Console.putString("Hey we made it back\n");
 	
-	for(;;){}	
+	Syscall.yield(null, 2);
 }
 
 void main(char[][] argv) {
