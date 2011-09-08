@@ -25,6 +25,10 @@ import kernel.arch.x86_64.specs.acpi;
 import kernel.core.error;	// ErrorVal
 import kernel.core.log;		// logging
 
+// reinit
+import user.environment;
+import kernel.core.kprintf; // remove
+
 struct Multiprocessor {
 static:
 public:
@@ -75,23 +79,24 @@ public:
 	
 	ErrorVal reinitialize() {
 		// Remake Tables
-		Paging.mapRegion(cast(void*) 0x1000, cast(void*) 0x1000, cast(ulong) 0x10000);
+		ubyte* start = findFreeSegment();
+		Paging.mapRegion(start, cast(void*) 0x0, cast(ulong) 0x100000);
+		ubyte* end = start + 0x100000;
 		
 		// 1. Look for the ACPI tables (preferred method)
-		if(ACPI.Tables.findTable() == ErrorVal.Success && ACPI.Tables.readTable() != ErrorVal.Success) {
-			return ErrorVal.Fail;
-		}
-		else {
+		if(ACPI.Tables.findTable(start, end) != ErrorVal.Success || ACPI.Tables.readTable() != ErrorVal.Success) {
 			// 2. Fall back on looking for the MP tables
 
 			// 2a. Locate the MP Tables
-			if (MP.findTable() == ErrorVal.Fail) {
+			if (MP.findTable(start) == ErrorVal.Fail) {
 				// If the MP table is missing, fail.
+				kprintfln!("MP.findTable")();
 				return ErrorVal.Fail;
 			}
 
 			// 2b. Read MP Tabletest
-			if (MP.readTable() != ErrorVal.Success) {
+			if (MP.readTable(start) != ErrorVal.Success) {
+				kprintfln!("MP.readTable")();
 				return ErrorVal.Fail;
 			}
 		}
@@ -100,6 +105,7 @@ public:
 		Log.print("LocalAPIC: initialize()");
 		ErrorVal LAPICInitialized = Log.result(LocalAPIC.initialize());
 		if (LAPICInitialized != ErrorVal.Success) {
+			kprintfln!("LocalAPIC")();
 			return ErrorVal.Fail;
 		}
 		
@@ -107,6 +113,7 @@ public:
 		Log.print("IOAPIC: initialize()");
 		ErrorVal IOAPICInitialized = Log.result(IOAPIC.initialize());
 		if (IOAPICInitialized != ErrorVal.Success) {
+			kprintfln!("IOAPIC")();
 			return ErrorVal.Fail;
 		}
 		

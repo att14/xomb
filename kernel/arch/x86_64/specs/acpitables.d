@@ -27,8 +27,9 @@ public:
 
 	// For the multiprocessor initialization.
 	// Will return true when the appropriate table is found.
-	ErrorVal findTable() {
-		if (findRSDP() == ErrorVal.Fail) {
+	ErrorVal findTable(ubyte* start = (cast(ubyte*)0xE0000 + cast(ulong)System.kernel.virtualStart), ubyte* end = (cast(ubyte*)0xFFFFF + cast(ulong) System.kernel.virtualStart)) {
+		
+		if (findRSDP(start, end) == ErrorVal.Fail) {
 			kprintfln!("Failed due to lack of RSDP")();
 			return ErrorVal.Fail;
 		}
@@ -151,11 +152,9 @@ private:
 	// search the BIOS memory range for "RSD PTR "
 	// this will give us the RSDP Table (Root System Description Pointer)
 
-	ErrorVal findRSDP() {
+	ErrorVal findRSDP(ubyte* start = (cast(ubyte*)0xE0000 + cast(ulong)System.kernel.virtualStart), ubyte* end = (cast(ubyte*)0xFFFFF + cast(ulong) System.kernel.virtualStart)) {
 		// Need to check the BIOS read-only memory space
-		if (scan(cast(ubyte*)0xE0000 + cast(ulong)System.kernel.virtualStart,
-					cast(ubyte*)0xFFFFF + cast(ulong)System.kernel.virtualStart)
-				== ErrorVal.Success) {
+		if (scan(start, end) == ErrorVal.Success) {
 			return ErrorVal.Success;
 		}
 

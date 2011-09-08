@@ -126,7 +126,7 @@ private:
 		//kprintfln!("IOAPIC Addr {x}")(ioAPICAddress);
 		void* IOAPICVirtAddr = Paging.mapRegion(ioAPICAddress, 4096);
 		//kprintfln!("IOAPIC Addr {x}")(IOAPICVirtAddr);
-
+		
 		// set the addresses for the data register and window
 		ioApicRegisterSelect[ioAPICID] = cast(uint*)(IOAPICVirtAddr);
 		ioApicWindowRegister[ioAPICID] = cast(uint*)(IOAPICVirtAddr + 0x10);
@@ -134,7 +134,7 @@ private:
 		// get the number of redirection table entries
 		ubyte apicVersion, maxRedirectionEntry;
 		getIOApicVersion(ioAPICID, apicVersion, maxRedirectionEntry);
-
+		
 		// it will report one less
 		maxRedirectionEntry++;
 
@@ -217,10 +217,9 @@ private:
 		valuelo |= interruptVector;
 
 		valuelo |= (1 << 16);
-
+		
 		writeRegister(ioApicID, cast(Register)(Register.REDTBL0HI + (registerIndex*2)), valuehi);
 		writeRegister(ioApicID, cast(Register)(Register.REDTBL0LO + (registerIndex*2)), valuelo);
-
 	}
 
 	void setRedirectionTableEntries() {

@@ -35,9 +35,9 @@ public:
 
 	// This function will search for the MP tables.
 	// It will return true when they have been found.
-	ErrorVal findTable() {
+	ErrorVal findTable(ubyte* start = System.kernel.virtualStart) {
 		// These two arrays define the regions to look for the table (in physical addresses)
-		static ubyte*[] checkStart	= [cast(ubyte*)0xf0000,	cast(ubyte*)0x9fc00];
+		static ubyte*[] checkStart	= [cast(ubyte*)0xf0000, cast(ubyte*)0x9fc00];
 		static ulong[] checkLen = [0xffff, 0x400];
 
 		// This will be the temporary pointer to be used to find the table
@@ -46,7 +46,7 @@ public:
 		// For every region, scan for the table signature
 		foreach(i,val; checkStart) {
 			// scan() -- searches for the signature `_MP_`
-			val += cast(ulong)System.kernel.virtualStart;
+			val += cast(ulong)start;
 
 			tmp = scan(val, val + checkLen[i]);
 			if (tmp !is null) {
@@ -66,13 +66,13 @@ public:
 	// This function will utilize the table once it has been
 	// found and store the information in a convenient place
 	// for the IO APIC manager.
-	ErrorVal readTable() {
+	ErrorVal readTable(ubyte* start = System.kernel.virtualStart) {
 		// Does the MP Configuration Table exist?
 		if (mpFloating.mpFeatures1 == 0) {
 			mpConfig = cast(MPConfigurationTable*)(cast(ulong)mpFloating.mpConfigPointer);
 
 			// Make sure we can read it through the paging
-			mpConfig = cast(MPConfigurationTable*)(cast(ubyte*)mpConfig + cast(ulong)System.kernel.virtualStart);
+			mpConfig = cast(MPConfigurationTable*)(cast(ubyte*)mpConfig + cast(ulong)start);
 
 			// Check the checksum of the configuration table
 			if (!isChecksumValid(cast(ubyte*)mpConfig, mpConfig.baseTableLength)) {
