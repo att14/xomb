@@ -44,7 +44,7 @@ class Keyboard {
 		// Trying to clear buffer
 		//*_writeOffset = *_readOffset;
 		
-		ErrorVal ret = KeyboardImplementation.initialize(&putKey, false);
+		ErrorVal ret = KeyboardImplementation.initialize(&putKey, true);
 		return ret;
 	}
 	

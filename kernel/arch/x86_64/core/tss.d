@@ -48,6 +48,9 @@ static:
 	ErrorVal install() {
 		TaskStateSegment* tss = cast(TaskStateSegment*)PageAllocator.allocPage();
 		tss = cast(TaskStateSegment*)Paging.mapRegion(cast(ubyte*)tss, VirtualMemory.pagesize);
+		asm {
+			xchg BX, BX;
+		}
 		*tss = TaskStateSegment.init;
 		segments[Cpu.identifier] = tss;
 		GDT.tables[Cpu.identifier].setSystemSegment((tssBase >> 3), 0x67, (cast(ulong)tss), SystemSegmentType.AvailableTSS, 0, true, false, false);
