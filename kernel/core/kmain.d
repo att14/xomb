@@ -53,55 +53,6 @@ extern(C) ubyte _end;
 ubyte* startBSS = &_bss;
 ubyte* endBSS = &_end;
 
-extern(C) void rekmain(short* keyboard, ulong* bitmap, ulong totalP, ubyte* vid) {
-	asm {
-		cli;
-	}
-	
-	// zero bss
-	ubyte* startBSS = &_edata;
-	ubyte* endBSS = &_end;
-
-	for( ; startBSS != endBSS; startBSS++) {
-		*startBSS = 0x00;
-	}
-	
-	PageAllocator.reinitialize(bitmap, totalP);
-	Console.reinitialize(vid);
-	
-	kprintfln!("Hello from the NEW KERNEL!!!!")();
-	
-	Log.print("VirtualMemory: initialize()");
-   	Log.result(VirtualMemory.reinitialize());
-   	
-	Log.print("Architecture: initialize()");
-   	Log.result(Architecture.reinitialize());
-
-	Log.print("Timing: initialize()");
-	Log.result(Timing.initialize());
-	
-	Log.print("PerfMon: initialize()");
-	Log.result(PerfMon.initialize());
-	
-	Log.print("Cpu: initialize()");
-	Log.result(Cpu.reinitialize());
-
-// IOAPIC: IOREGSEL points to undefined register
-// ffffffb1
-	Log.print("Multiprocessor: initialize()");
-	Log.result(Multiprocessor.reinitialize());
-	kprintfln!("Number of Cores: {}")(Multiprocessor.cpuCount);
-	
-	Log.print("Syscall: initialize()");
-	Log.result(Syscall.initialize());
-	
-	// getKeyboardBuffer should be param of rekmain
-	Log.print("Keyboard: initialize()");
-	Log.result(Keyboard.reinitialize(keyboard));
-	
-	Cpu.enterUserspace(1, 0);
-}
-
 // The main function for the kernel.
 // This will receive data from the boot loader.
 
@@ -201,6 +152,58 @@ extern(C) void kmain(int bootLoaderID, void *data) {
 	assert(false, "Something is VERY VERY WRONG. entering Init returned. :(");
 	
 	for(;;){}
+}
+
+extern(C) void rekmain(short* keyboard, ulong* bitmap, ulong totalP, ubyte* vid) {
+	// disable interupts
+	asm {
+		cli;
+	}
+	
+	// zero bss
+	ubyte* startBSS = &_edata;
+	ubyte* endBSS = &_end;
+
+	for( ; startBSS != endBSS; startBSS++) {
+		*startBSS = 0x00;
+	}
+	
+	// these seem pretty important, right?
+	PageAllocator.initialize(true, bitmap, totalP);
+	Console.reinitialize(vid); // ??????
+	
+	Log.print("PageAllocator: initialize()");
+	Log.result(ErrorVal.Success);
+	
+	Log.print("Console: initialize()");
+	Log.result(ErrorVal.Success);
+	
+	Log.print("VirtualMemory: initialize()");
+   	Log.result(VirtualMemory.initialize(true));
+   	
+	Log.print("Architecture: initialize()");
+   	Log.result(Architecture.initialize(true));
+
+	Log.print("Timing: initialize()");
+	Log.result(Timing.initialize());
+	
+	Log.print("PerfMon: initialize()");
+	Log.result(PerfMon.initialize());
+	
+	Log.print("Cpu: initialize()");
+	Log.result(Cpu.initialize(true));
+
+	Log.print("Multiprocessor: initialize()");
+	Log.result(Multiprocessor.initialize(true));
+	kprintfln!("Number of Cores: {}")(Multiprocessor.cpuCount);
+	
+	Log.print("Syscall: initialize()");
+	Log.result(Syscall.initialize());
+	
+	Log.print("Keyboard: initialize()");
+	Log.result(Keyboard.reinitialize(keyboard));
+	
+	Cpu.enterUserspace(1, 0);
 }
 
 extern(C) void apEntry() {

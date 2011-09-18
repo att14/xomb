@@ -36,14 +36,15 @@ struct PageAllocator {
 static:
 public:
 
-	ErrorVal initialize() {
-		ErrorVal ret = PageAllocatorImplementation.initialize();
-		_initialized = true;
-		return ret;
-	}
-	
-	ErrorVal reinitialize(ulong* bitmap, ulong totalP) {
-		ErrorVal ret = PageAllocatorImplementation.reinitialize(bitmap, totalP);
+	ErrorVal initialize(bool reinit = false, ulong* bitmap = null, ulong totalP = 0) {
+		ErrorVal ret;
+		
+		if (reinit) {
+			ret = PageAllocatorImplementation.reinitialize(bitmap, totalP);
+		} else {
+			ret = PageAllocatorImplementation.initialize();
+		}
+		
 		_initialized = true;
 		return ret;
 	}

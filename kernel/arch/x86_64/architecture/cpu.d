@@ -43,7 +43,7 @@ static:
 public:
 
 	// This module will conform to the interface
-	ErrorVal initialize() {
+	ErrorVal initialize(bool reinit = false) {
 		LocalAPIC.reportCore();
 
 		Log.print("Cpu: Verifying");
@@ -51,9 +51,11 @@ public:
 
 		// enable NX bit support
 		Cpu.writeMSR(0xC0000080, Cpu.readMSR(0xC0000080)|0x800UL);
-
-		Log.print("Cpu: Installing Page Table");
-		Log.result(Paging.install());
+		
+		if (!reinit) {
+			Log.print("Cpu: Installing Page Table");
+			Log.result(Paging.install());
+		}
 
 		Log.print("Cpu: Enabling GDT");
 		Log.result(GDT.install());
@@ -65,7 +67,7 @@ public:
 		Log.result(IDT.install());
 
 		Log.print("Cpu: Installing Stack");
-		Log.result(installStack());
+		Log.result(installStack(reinit));
 
 		asm {
 			sti;
@@ -74,10 +76,15 @@ public:
 		Log.print("Cpu: Enabled Interrupts");
 	   	Log.result(ErrorVal.Success);
 
-		Log.print("Cpu: Polling Cache Info");
-		Log.result(getCacheInfo());
-
-		enableFPU();
+		if (reinit) {
+			Log.print("Cpu: IDT Handlers");
+			Log.result(Paging.reinitIDTHandler());
+		} else {
+			Log.print("Cpu: Polling Cache Info");
+			Log.result(getCacheInfo());
+	
+			enableFPU();
+		}
 
 		//Log.print("Cpu: Installing System Calls");
 		//Log.result(Syscall.initialize);
@@ -104,7 +111,7 @@ public:
 		Log.result(IDT.install());
 
 		Log.print("Cpu: Installing Stack");
-		Log.result(reinstallStack());
+		Log.result(installStack());
 
 		asm {	
 			sti;
@@ -721,59 +728,20 @@ private:
 
 	// Will create and install a new kernel stack
 	// Note: You have to preserve the current stack
-	ErrorVal installStack() {
-		ubyte* stackSpace = cast(ubyte*)PageAllocator.allocPage();
-		stackSpace = cast(ubyte*)VirtualMemory.mapStack(stackSpace);
-		ubyte* currentStack = cast(ubyte*)(&_stack-4096);
-
-		stackSpace[0..4096] = currentStack[0..4096];
-
-		_stacks[identifier] = cast(void*)stackSpace + 4096;
-		TSS.table.RSP0 = cast(void*)stackSpace + 4096;
-
-		StackFrame* curr = null;
-
-		asm {
-			// Retrieve stack pointer, place in RAX
-			mov RAX, RSP;
-
-			// Get the page offset
-			and RAX, Paging.PAGESIZE - 1;
-
-			// Add this to the stackspace pointer
-			add RAX, stackSpace;
-
-			// Set stack pointer
-			mov RSP, RAX;
-
-			// Do the same for frame pointer
-			mov RAX, RBP;
-			and RAX, Paging.PAGESIZE - 1;
-			add RAX, stackSpace;
-			mov RBP, RAX;
-
-			mov curr, RBP;
-		}
-
-		while(isValidAddress(cast(ubyte*)curr.next) && cast(ulong)curr.next > Paging.PAGESIZE) {
-			curr.next = cast(StackFrame*)(cast(ulong)curr.next & (Paging.PAGESIZE - 1));
-			curr.next = cast(StackFrame*)(cast(ulong)curr.next + stackSpace); 
-			curr = curr.next;
-		}
-
-		return ErrorVal.Success;
-	}
-	
-	ErrorVal reinstallStack() {
+	ErrorVal installStack(bool reinit = false) {
 		ubyte* stackSpace = cast(ubyte*)PageAllocator.allocPage();
 		stackSpace = cast(ubyte*)VirtualMemory.mapStack(stackSpace);
 		ubyte* currentStack;
 		
-		asm {
-			mov R11, RSP;
-			mov R10, ~0xfff;
-			and R11, R10;
-			mov currentStack, R11;
+		if (reinit) {
+			asm {
+				mov R11, RSP;
+				mov R10, ~0xfff;
+				and R11, R10;
+				mov currentStack, R11;
+			}
+		} else {
+			currentStack = cast(ubyte*)(&_stack-4096);
 		}
 
 		stackSpace[0..4096] = currentStack[0..4096];
@@ -782,7 +750,7 @@ private:
 		TSS.table.RSP0 = cast(void*)stackSpace + 4096;
 
 		StackFrame* curr = null;
-		
+
 		asm {
 			// Retrieve stack pointer, place in RAX
 			mov RAX, RSP;
@@ -810,7 +778,7 @@ private:
 			curr.next = cast(StackFrame*)(cast(ulong)curr.next + stackSpace); 
 			curr = curr.next;
 		}
-		
+
 		return ErrorVal.Success;
 	}
 

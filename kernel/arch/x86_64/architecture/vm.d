@@ -21,16 +21,14 @@ static:
 public:
 
 	// -- Initialization -- //
-	bool reinit;
+	bool update;
 	
-	ErrorVal initialize() {
+	ErrorVal initialize(bool reinit = false) {
+		if (reinit) {
+			update = true;
+		}
 		// Install Virtual Memory and Paging
-		return Paging.initialize();
-	}
-	
-	ErrorVal reinitialize() {
-		reinit = true;
-		return Paging.reinitialize();	
+		return Paging.initialize(reinit);
 	}
 
 	ErrorVal install() {
@@ -82,7 +80,7 @@ public:
 	}
 
 	synchronized void* mapStack(void* physAddr) {
-		if(reinit){
+		if(update){
 			return Paging.mapRegion(physAddr, 4096);	
 		}
 		if(stackSegment is null){

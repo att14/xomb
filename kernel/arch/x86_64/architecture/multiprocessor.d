@@ -28,15 +28,29 @@ import kernel.core.log;		// logging
 // reinit
 import user.environment;
 import kernel.core.kprintf; // remove
+import kernel.system.info;
 
 struct Multiprocessor {
 static:
 public:
 
 	// This module will conform to the interface
-	ErrorVal initialize() {
+	ErrorVal initialize(bool reinit = false) {
+		ubyte* start;
+		ubyte* end;
+			
+		if (reinit) {	
+			// Remake Tables
+			start = findFreeSegment();
+			Paging.mapRegion(start, cast(void*) 0x0, cast(ulong) 0x100000);
+			end = start + 0x100000;
+		} else {
+			start = (cast(ubyte*)0xE0000 + cast(ulong)System.kernel.virtualStart);
+			end = (cast(ubyte*)0xFFFFF + cast(ulong) System.kernel.virtualStart);
+		}
+		
 		// 1. Look for the ACPI tables (preferred method)
-		if(ACPI.Tables.findTable() == ErrorVal.Success && ACPI.Tables.readTable() == ErrorVal.Success) {
+		if(ACPI.Tables.findTable(start , end) == ErrorVal.Success && ACPI.Tables.readTable() == ErrorVal.Success) {
 			// ACPI tables parsed
 		}
 		else {
@@ -72,56 +86,6 @@ public:
 		asm {
 			sti;
 		}
-
-		// If it got this far, it has succeeded
-		return ErrorVal.Success;
-	}
-	
-	ErrorVal reinitialize() {
-		// Remake Tables
-		ubyte* start = findFreeSegment();
-		Paging.mapRegion(start, cast(void*) 0x0, cast(ulong) 0x100000);
-		ubyte* end = start + 0x100000;
-		
-		// 1. Look for the ACPI tables (preferred method)
-		if(ACPI.Tables.findTable(start, end) != ErrorVal.Success || ACPI.Tables.readTable() != ErrorVal.Success) {
-			// 2. Fall back on looking for the MP tables
-
-			// 2a. Locate the MP Tables
-			if (MP.findTable(start) == ErrorVal.Fail) {
-				// If the MP table is missing, fail.
-				kprintfln!("MP.findTable")();
-				return ErrorVal.Fail;
-			}
-
-			// 2b. Read MP Tabletest
-			if (MP.readTable(start) != ErrorVal.Success) {
-				kprintfln!("MP.readTable")();
-				return ErrorVal.Fail;
-			}
-		}
-
-		// 3a. Initialize Local APIC
-		Log.print("LocalAPIC: initialize()");
-		ErrorVal LAPICInitialized = Log.result(LocalAPIC.initialize());
-		if (LAPICInitialized != ErrorVal.Success) {
-			kprintfln!("LocalAPIC")();
-			return ErrorVal.Fail;
-		}
-		
-		// 3b. Initialize IOAPIC
-		Log.print("IOAPIC: initialize()");
-		ErrorVal IOAPICInitialized = Log.result(IOAPIC.initialize());
-		if (IOAPICInitialized != ErrorVal.Success) {
-			kprintfln!("IOAPIC")();
-			return ErrorVal.Fail;
-		}
-		
-		// Enable Interrupts
-		asm {
-			sti;
-		}
-//		enableInterrupts();
 
 		// If it got this far, it has succeeded
 		return ErrorVal.Success;

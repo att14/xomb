@@ -25,7 +25,6 @@ import architecture.vm;
 import user.environment;
 
 ErrorVal initialize() {
-
 	// Calculate the number of pages.
 	totalPages = System.memory.length / VirtualMemory.pagesize();
 

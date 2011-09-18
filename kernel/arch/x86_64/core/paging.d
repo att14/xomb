@@ -61,68 +61,59 @@ static:
 	const auto PAGESIZE = 4096;
 
 	// This function will initialize paging and install a core page table.
-	ErrorVal initialize() {
-		// Create a new page table.
-		root = cast(PageLevel4*)PageAllocator.allocPage();
-		PageLevel3* globalRoot = cast(PageLevel3*)PageAllocator.allocPage();
-
-		//kprintfln!("root: {} pl3: {} pl2: {}")(root, pl3, pl2);
-
-		// Initialize the structure. (Zero it)
-		*root = PageLevel4.init;
-		*globalRoot = PageLevel3.init;
-
-		// Map entries 510 to the PML4
-		root.entries[510].pml = cast(ulong)root;
-		root.entries[510].setMode(AccessMode.Read|AccessMode.User);
-
-		/* currently the kernel isn't forced to respect the rw bit. if
-			 this is enabled, another paging trick will be needed with
-			 Writable permission for the kernel
-		 */
-
-		// Map entry 509 to the global root
-		root.entries[509].pml = cast(ulong)globalRoot;
-		root.entries[509].setMode(AccessMode.Read);
-
-		// The current position of the kernel space. All gets appended to this address.
-		heapAddress = LinkerScript.kernelVMA;
-
-		// We need to map the kernel
-		kernelAddress = heapAddress;
-
-		//kprintfln!("About to map kernel")();
-		mapRegion(System.kernel.start, System.kernel.length);
-
-		void* bitmapLocation = heapAddress;
-		
-		// The first gib for the kernel
-		nextGib++;
-
-		// Assign the page fault handler
-		IDT.assignHandler(&faultHandler, 14);
-
-		IDT.assignHandler(&gpfHandler, 13);
-
-		// We now have the kernel mapped
-		kernelMapped = true;
-
-		// Save the physical address for later
-		rootPhysical = cast(void*)root;
-
-		// This is the virtual address for the page table
-		root = cast(PageLevel4*)0xFFFFFF7F_BFDFE000;
-
-		// All is well.
-		return ErrorVal.Success;
-	}
+	ErrorVal initialize(bool reinit) {
+		if (reinit) {
+			// create new heap
+			heapAddress = findFreeSegment();
+			
+			// calculate nextGib based on new heap
+			ulong gib = cast(ulong) heapAddress;
+			gib -= 0xFFFF800000000000;
+			gib = gib/0x40000000;
+			nextGib = gib;	
+		} else {
+			// Create a new page table.
+			root = cast(PageLevel4*)PageAllocator.allocPage();
+			PageLevel3* globalRoot = cast(PageLevel3*)PageAllocator.allocPage();
 	
-	ErrorVal reinitialize() {
-		heapAddress = findFreeSegment();
-		ulong gib = cast(ulong) heapAddress;
-		gib -= 0xFFFF800000000000;
-		gib = gib/0x40000000;
-		nextGib = gib;
+			//kprintfln!("root: {} pl3: {} pl2: {}")(root, pl3, pl2);
+	
+			// Initialize the structure. (Zero it)
+			*root = PageLevel4.init;
+			*globalRoot = PageLevel3.init;
+	
+			// Map entries 510 to the PML4
+			root.entries[510].pml = cast(ulong)root;
+			root.entries[510].setMode(AccessMode.Read|AccessMode.User);
+	
+			/* currently the kernel isn't forced to respect the rw bit. if
+				 this is enabled, another paging trick will be needed with
+				 Writable permission for the kernel
+			 */
+	
+			// Map entry 509 to the global root
+			root.entries[509].pml = cast(ulong)globalRoot;
+			root.entries[509].setMode(AccessMode.Read);
+	
+			// The current position of the kernel space. All gets appended to this address.
+			heapAddress = LinkerScript.kernelVMA;
+	
+			// We need to map the kernel
+			kernelAddress = heapAddress;
+	
+			//kprintfln!("About to map kernel")();
+			mapRegion(System.kernel.start, System.kernel.length);
+	
+			void* bitmapLocation = heapAddress;
+			
+			// The first gib for the kernel
+			nextGib++;
+	
+			// Assign the page fault handler
+			IDT.assignHandler(&faultHandler, 14);
+	
+			IDT.assignHandler(&gpfHandler, 13);
+		}
 
 		// We now have the kernel mapped
 		kernelMapped = true;

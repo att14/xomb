@@ -27,7 +27,7 @@ public:
 
 	// For the multiprocessor initialization.
 	// Will return true when the appropriate table is found.
-	ErrorVal findTable(ubyte* start = (cast(ubyte*)0xE0000 + cast(ulong)System.kernel.virtualStart), ubyte* end = (cast(ubyte*)0xFFFFF + cast(ulong) System.kernel.virtualStart)) {
+	ErrorVal findTable(ubyte* start, ubyte* end) {
 		
 		if (findRSDP(start, end) == ErrorVal.Fail) {
 			kprintfln!("Failed due to lack of RSDP")();
