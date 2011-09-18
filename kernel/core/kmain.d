@@ -45,10 +45,6 @@ import kernel.core.syscall;
 // init process
 import kernel.core.initprocess;
 
-// Arguements for rekmain
-int _bootLoaderID;
-void *_data;
-
 // bss stuffs
 extern(C) ubyte _edata;
 extern(C) ubyte _bss;
@@ -112,10 +108,6 @@ extern(C) void rekmain(short* keyboard, ulong* bitmap, ulong totalP, ubyte* vid)
 // bootLoaderID is the unique identifier for a boot loader.
 // data is a structure given by the boot loader.
 extern(C) void kmain(int bootLoaderID, void *data) {
-	//save arguements
-	_bootLoaderID = bootLoaderID;
-	_data = data;
-
 	//first, we'll print out some fun status messages.
 	kprintfln!("{!cls!fg:White} Welcome to {!fg:Green}{}{!fg:White}! (version {}.{}.{})")("XOmB", 0,1,0);
 	for(int i; i < 80; i++) {
