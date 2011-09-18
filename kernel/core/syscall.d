@@ -123,7 +123,7 @@ public:
 		Cpu.enterUserspace(idx, physAddr);
 	}
 	
-	SyscallError swap(out bool ret, SwapArgs* params) {
+	SyscallError update(UpdateArgs* params) {
 		ubyte* nkern = params.newkern;
 		ulong _startk = 0xFFFF800000000000;
 		
@@ -169,7 +169,7 @@ where:		pop RBX;
 				mov RCX, virta;
 				mov [RCX], RBX;
 				// flush tlb
-tlb:			mov RAX, CR3;
+				mov RAX, CR3;
 				mov CR3, RAX;
 				mov RAX, CR4;
 				mov CR4, RAX;
@@ -186,9 +186,7 @@ tlb:			mov RAX, CR3;
 		}
 		
 		//should not get here
-		ret = true;
-	
-		return SyscallError.OK;
+		return SyscallError.Failcopter;
 	}
 }
 

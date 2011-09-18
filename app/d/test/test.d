@@ -29,5 +29,5 @@ void main(char[][] argv) {
 	XombThread* t = XombThread.threadCreate(&newThread, 0);
 	t.schedule();
 	
-	Syscall.swap(f.ptr);
+	Syscall.update(f.ptr);
 }

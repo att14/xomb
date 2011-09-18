@@ -18,7 +18,7 @@ enum SyscallID : ulong {
 	CreateAddressSpace,
 	Map,
 	Yield,
-	Swap,
+	Update,
 }
 
 // Names of system calls
@@ -29,7 +29,7 @@ alias Tuple! (
 	"createAddressSpace", // createAddressSpace()
 	"map",				// map()
 	"yield",			// yield()
-	"swap"				// swap()
+	"update"			// swap()
 ) SyscallNames;
 
 
@@ -41,7 +41,7 @@ alias Tuple! (
 	AddressSpace,	// createAddressSpace
 	void,			// map
 	void,			// yield
-	bool			// swap
+	void			// update
 ) SyscallRetTypes;
 
 // Parameters to system call
@@ -75,7 +75,7 @@ struct YieldArgs {
 	ulong idx;
 }
 
-struct SwapArgs {
+struct UpdateArgs {
 	ubyte* newkern;
 }
 
