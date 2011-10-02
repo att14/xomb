@@ -18,7 +18,7 @@ enum SyscallID : ulong {
 	CreateAddressSpace,
 	Map,
 	Yield,
-	Update,
+	_update,
 }
 
 // Names of system calls
@@ -29,7 +29,7 @@ alias Tuple! (
 	"createAddressSpace", // createAddressSpace()
 	"map",				// map()
 	"yield",			// yield()
-	"update"			// swap()
+	"_update"			// swap()
 ) SyscallNames;
 
 
@@ -75,8 +75,31 @@ struct YieldArgs {
 	ulong idx;
 }
 
-struct UpdateArgs {
+struct _updateArgs {
 	ubyte* newkern;
+}
+
+version(KERNEL) {
+	// don't need this in kernel
+} else {
+	void update(ubyte* ptr) {
+		// save callee-saved regs
+		asm {
+			pushq R12;
+			pushq R13;
+			pushq R14;
+			pushq R15;
+		}
+		
+		_update(ptr);
+		
+		asm {
+			popq R15;
+			popq R14;
+			popq R13;
+			popq R12;
+		}
+	}
 }
 
 // XXX: This template exists because of a bug in the DMDFE; something like Templ!(tuple[idx]) fails for some reason

@@ -170,7 +170,7 @@ extern(C) void rekmain(short* keyboard, ulong* bitmap, ulong totalP, ubyte* vid)
 	
 	// these seem pretty important, right?
 	PageAllocator.initialize(true, bitmap, totalP);
-	Console.reinitialize(vid); // ??????
+	Console.reinitialize(vid);
 	
 	Log.print("PageAllocator: initialize()");
 	Log.result(ErrorVal.Success);
@@ -203,7 +203,24 @@ extern(C) void rekmain(short* keyboard, ulong* bitmap, ulong totalP, ubyte* vid)
 	Log.print("Keyboard: initialize()");
 	Log.result(Keyboard.reinitialize(keyboard));
 	
-	Cpu.enterUserspace(1, 0);
+	// restore stack and return to userspace
+	asm {
+		mov RBX, RSP;
+		and RBX, ~0xfff;
+		add RBX, 0xfd8;
+		mov RSP, RBX;
+
+		popq RAX;
+		popq R11;
+		popq RCX;
+
+		// restore stack foo
+		popq RBP;
+		popq R9;
+		mov RSP, R9;
+
+		sysretq;
+	}
 }
 
 extern(C) void apEntry() {

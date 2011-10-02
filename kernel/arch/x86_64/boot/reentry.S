@@ -10,7 +10,7 @@ extern rekmain
 				
 global _start
 _start:
-	call rekmain
+	jmp rekmain
 
 	;jmp rax
 

@@ -123,7 +123,7 @@ public:
 		Cpu.enterUserspace(idx, physAddr);
 	}
 	
-	SyscallError update(UpdateArgs* params) {
+	SyscallError _update(_updateArgs* params) {
 		ubyte* nkern = params.newkern;
 		ulong _startk = 0xFFFF800000000000;
 		

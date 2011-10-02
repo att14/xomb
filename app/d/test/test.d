@@ -14,20 +14,24 @@ import libos.fs.minfs;
 
 import libos.libdeepmajik.threadscheduler;
 
-char[] itoa(long, uint);
-
-void newThread() {
-	Console.putString("Hey we made it back\n");
-	
-	Syscall.yield(null, 2);
-}
-
 void main(char[][] argv) {
+	ulong s;
 	MinFS.initialize();
 	File f = MinFS.open("/binaries/xomb", AccessMode.Executable);
 	
-	XombThread* t = XombThread.threadCreate(&newThread, 0);
-	t.schedule();
+	asm {
+		mov R12, 0x9;	
+	}
 	
-	Syscall.update(f.ptr);
+	Syscall._update(f.ptr);
+	
+	Console.putString("Back to test.d\n");
+	
+	asm {
+		mov R11, R12;
+	}
+	
+	if (s == 9) {
+		Console.putString("It worked\n");
+	}
 }
